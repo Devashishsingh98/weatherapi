@@ -21,6 +21,6 @@ submit.addEventListener("click", () => {
       inputValue.value = "";
     })
     .catch((err) => {
-      console.error("Error aa gaya bhai");
+      console.error("Error Unable to connect");
     });
 });
