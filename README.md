@@ -1,4 +1,4 @@
-# Weatherapi
+# WeatherAPI
 ## Simple application for Weather.
 I made this for the beginners. It is easy to understand. How API works. Anyone can download, edit as they please.
 
