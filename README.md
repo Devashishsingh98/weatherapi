@@ -4,6 +4,6 @@ I made this for the beginners. It is easy to understand. How API works. Anyone c
 
 ## How to use it?
 * Open terminal and type **git clone {copy link}**.
-* Everything will be downloaded.
+* Everything will be downloaded...
 
 # Have fun :grin:
