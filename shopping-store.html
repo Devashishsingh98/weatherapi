@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bhilai Shopping Store - Your Local Marketplace</title>
+    <link rel="stylesheet" href="shopping-store.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Fallback if Three.js CDN fails - ensure website still works
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (typeof THREE === 'undefined') {
+                    console.warn('Three.js failed to load from CDN, disabling 3D effects');
+                    const canvas = document.getElementById('threejs-canvas');
+                    if (canvas) {
+                        canvas.style.display = 'none';
+                    }
+                }
+                // Always ensure loading screen is hidden after load
+                const loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen && loadingScreen.style.display !== 'none') {
+                    if (typeof hideLoadingScreen === 'function') {
+                        hideLoadingScreen();
+                    } else {
+                        loadingScreen.style.display = 'none';
+                    }
+                }
+            }, 3000); // 3 second timeout
+        });
+    </script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Welcome to Bhilai Store</h3>
+            <p>Loading your shopping experience...</p>
+        </div>
+    </div>
+
+    <!-- 3D Background Canvas -->
+    <canvas id="threejs-canvas"></canvas>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo" onclick="showPage('home')">
+                <i class="fas fa-store"></i>
+                <span>Bhilai Store</span>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="nav-search">
+                <input type="text" id="search-input" placeholder="Search products..." autocomplete="off">
+                <button id="search-btn"><i class="fas fa-search"></i></button>
+                <div id="search-results" class="search-results"></div>
+            </div>
+
+            <div class="nav-actions">
+                <!-- Cart -->
+                <div class="nav-cart" onclick="showCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count" class="cart-count">0</span>
+                </div>
+
+                <!-- Wishlist -->
+                <div class="nav-wishlist" onclick="showWishlist()">
+                    <i class="fas fa-heart"></i>
+                    <span id="wishlist-count" class="wishlist-count">0</span>
+                </div>
+
+                <!-- User Account -->
+                <div class="nav-user">
+                    <i class="fas fa-user" onclick="showAuthModal()"></i>
+                    <div id="user-menu" class="user-menu">
+                        <div id="guest-menu">
+                            <button onclick="showAuthModal('login')">Login</button>
+                            <button onclick="showAuthModal('register')">Register</button>
+                        </div>
+                        <div id="user-info" style="display: none;">
+                            <div id="user-name"></div>
+                            <button onclick="showPage('dashboard')">Dashboard</button>
+                            <button onclick="logout()">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+
+        <!-- Home Page -->
+        <div id="home-page" class="page active">
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="hero-container">
+                    <div class="hero-content">
+                        <h1 class="hero-title">Welcome to Bhilai's Premier Shopping Destination</h1>
+                        <p class="hero-subtitle">Discover quality products, fresh groceries, and everything you need for your daily life. Your neighborhood store, serving with love and care.</p>
+                        <div class="hero-buttons">
+                            <button onclick="showPage('products')" class="btn btn-primary">Shop Now</button>
+                            <button onclick="showPage('contact')" class="btn btn-secondary">Contact Us</button>
+                        </div>
+                    </div>
+                    <div class="hero-image">
+                        <div class="floating-card">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Fresh & Quality</span>
+                        </div>
+                        <div class="floating-card delay-1">
+                            <i class="fas fa-truck"></i>
+                            <span>Fast Delivery</span>
+                        </div>
+                        <div class="floating-card delay-2">
+                            <i class="fas fa-star"></i>
+                            <span>Best Prices</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Featured Categories -->
+            <section class="featured-categories">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>Shop by Category</h2>
+                        <p>Find everything you need in our categories</p>
+                    </div>
+                    <div id="categories-grid" class="categories-grid">
+                        <!-- Categories will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Featured Products -->
+            <section class="featured-products">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>Featured Products</h2>
+                        <p>Handpicked products just for you</p>
+                    </div>
+                    <div id="featured-products" class="products-grid">
+                        <!-- Featured products will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Products Page -->
+        <div id="products-page" class="page">
+            <div class="container">
+                <div class="products-header">
+                    <h1>All Products</h1>
+                    <div class="products-controls">
+                        <div class="filter-toggle">
+                            <button id="filter-btn" class="btn btn-secondary">
+                                <i class="fas fa-filter"></i> Filters
+                            </button>
+                        </div>
+                        <div class="sort-dropdown">
+                            <select id="sort-select">
+                                <option value="name">Name A-Z</option>
+                                <option value="price-low">Price: Low to High</option>
+                                <option value="price-high">Price: High to Low</option>
+                                <option value="rating">Highest Rated</option>
+                                <option value="newest">Newest</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="products-layout">
+                    <!-- Filters Sidebar -->
+                    <aside id="filters-sidebar" class="filters-sidebar">
+                        <div class="filters-header">
+                            <h3>Filters</h3>
+                            <button id="close-filters" class="close-btn">&times;</button>
+                        </div>
+
+                        <div class="filter-group">
+                            <h4>Category</h4>
+                            <div id="category-filters" class="filter-options">
+                                <!-- Category filters will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <h4>Price Range</h4>
+                            <div class="price-range">
+                                <input type="range" id="price-min" min="0" max="20000" value="0" step="100">
+                                <input type="range" id="price-max" min="0" max="20000" value="20000" step="100">
+                                <div class="price-display">
+                                    <span id="price-min-display">₹0</span> - <span id="price-max-display">₹20000</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <h4>Rating</h4>
+                            <div class="rating-filters">
+                                <label><input type="checkbox" value="4"> 4+ Stars</label>
+                                <label><input type="checkbox" value="3"> 3+ Stars</label>
+                                <label><input type="checkbox" value="2"> 2+ Stars</label>
+                            </div>
+                        </div>
+
+                        <button id="apply-filters" class="btn btn-primary">Apply Filters</button>
+                        <button id="clear-filters" class="btn btn-secondary">Clear All</button>
+                    </aside>
+
+                    <!-- Products Grid -->
+                    <div class="products-main">
+                        <div id="products-grid" class="products-grid">
+                            <!-- Products will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Pagination -->
+                        <div id="pagination" class="pagination">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Detail Page -->
+        <div id="product-detail-page" class="page">
+            <div class="container">
+                <div id="product-detail" class="product-detail">
+                    <!-- Product detail will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Page -->
+        <div id="cart-page" class="page">
+            <div class="container">
+                <h1>Shopping Cart</h1>
+                <div id="cart-content" class="cart-content">
+                    <!-- Cart content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Page -->
+        <div id="checkout-page" class="page">
+            <div class="container">
+                <div class="checkout-container">
+                    <div class="checkout-progress">
+                        <div class="progress-step active" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-title">Cart</span>
+                        </div>
+                        <div class="progress-step" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-title">Shipping</span>
+                        </div>
+                        <div class="progress-step" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-title">Payment</span>
+                        </div>
+                        <div class="progress-step" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-title">Confirm</span>
+                        </div>
+                    </div>
+
+                    <div id="checkout-content" class="checkout-content">
+                        <!-- Checkout steps will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Dashboard -->
+        <div id="dashboard-page" class="page">
+            <div class="container">
+                <div class="dashboard-container">
+                    <div class="dashboard-sidebar">
+                        <h3>My Account</h3>
+                        <ul class="dashboard-menu">
+                            <li><a href="#" onclick="showDashboardSection('profile')">Profile</a></li>
+                            <li><a href="#" onclick="showDashboardSection('orders')">Order History</a></li>
+                            <li><a href="#" onclick="showDashboardSection('wishlist')">Wishlist</a></li>
+                            <li><a href="#" onclick="showDashboardSection('addresses')">Addresses</a></li>
+                        </ul>
+                    </div>
+                    <div id="dashboard-content" class="dashboard-content">
+                        <!-- Dashboard content will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Page -->
+        <div id="contact-page" class="page">
+            <!-- Contact section will be populated by JavaScript -->
+        </div>
+    </main>
+
+    <!-- Products Section -->
+    <section id="products" class="products">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Popular Categories</h2>
+                <p>Everything you need under one roof</p>
+            </div>
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h3>Groceries</h3>
+                    <p>Fresh fruits, vegetables, and daily essentials</p>
+                    <span class="product-tag">Fresh Daily</span>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">
+                        <i class="fas fa-tshirt"></i>
+                    </div>
+                    <h3>Fashion</h3>
+                    <p>Trendy clothing and accessories for all ages</p>
+                    <span class="product-tag">Latest Trends</span>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3>Home & Kitchen</h3>
+                    <p>Household items and kitchen appliances</p>
+                    <span class="product-tag">Quality Assured</span>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">
+                        <i class="fas fa-pills"></i>
+                    </div>
+                    <h3>Pharmacy</h3>
+                    <p>Medicines and healthcare products</p>
+                    <span class="product-tag">24/7 Available</span>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Electronics</h3>
+                    <p>Mobile phones and electronic gadgets</p>
+                    <span class="product-tag">Latest Tech</span>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">
+                        <i class="fas fa-birthday-cake"></i>
+                    </div>
+                    <h3>Bakery</h3>
+                    <p>Fresh bread, cakes, and confectionery</p>
+                    <span class="product-tag">Fresh Baked</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Long Hours</h3>
+                    <p>Open from 8 AM to 10 PM daily</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Quality Guarantee</h3>
+                    <p>100% genuine products with warranty</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3>Easy Payment</h3>
+                    <p>Multiple payment options available</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>Customer Support</h3>
+                    <p>Friendly staff always ready to help</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>About Our Store</h2>
+                    <p>Serving the Bhilai community for over 10 years, we pride ourselves on being your trusted neighborhood store. We understand the needs of our local customers and strive to provide the best shopping experience possible.</p>
+                    <p>From fresh groceries to daily essentials, we ensure that you get quality products at reasonable prices. Our dedicated team works hard to maintain the highest standards of service.</p>
+                    <div class="stats">
+                        <div class="stat">
+                            <h4>10+</h4>
+                            <p>Years of Service</p>
+                        </div>
+                        <div class="stat">
+                            <h4>5000+</h4>
+                            <p>Happy Customers</p>
+                        </div>
+                        <div class="stat">
+                            <h4>1000+</h4>
+                            <p>Products Available</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-image">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yMDAgODBMMjgwIDE1MEwyMDAgMjIwbTEyMCAwTDIwMCAyMjBMMTIwIDE1MEwyMDAgODB6IiBmaWxsPSIjM0I4MkZDNiIvPgo8Y2lyY2xlIGN4PSIyMDAiIGN5PSIxNTAiIHI9IjMwIiBmaWxsPSIjRkZGNjU2Ii8+Cjx0ZXh0IHg9IjIwMCIgeT0iMTYwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiBmb250LWZhbWlseT0iQXJpYWwiPkJoaWxhaSBTdG9yZTwvdGV4dD4KPC9zdmc+" alt="Bhilai Store">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modals -->
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="auth-title">Login</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div id="auth-forms" class="modal-body">
+                <!-- Auth forms will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Quick View Modal -->
+    <div id="quick-view-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Product Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div id="quick-view-content" class="modal-body">
+                <!-- Quick view content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div id="cart-sidebar" class="cart-sidebar">
+        <div class="cart-header">
+            <h3>Shopping Cart</h3>
+            <button class="close-cart">&times;</button>
+        </div>
+        <div id="cart-items" class="cart-items">
+            <!-- Cart items will be populated by JavaScript -->
+        </div>
+        <div id="cart-footer" class="cart-footer">
+            <!-- Cart footer will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Wishlist Sidebar -->
+    <div id="wishlist-sidebar" class="wishlist-sidebar">
+        <div class="wishlist-header">
+            <h3>My Wishlist</h3>
+            <button class="close-wishlist">&times;</button>
+        </div>
+        <div id="wishlist-items" class="wishlist-items">
+            <!-- Wishlist items will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fas fa-store"></i>
+                        <span>Bhilai Store</span>
+                    </div>
+                    <p>Your trusted neighborhood store in Bhilai. Quality products, great service, and community focus.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#" onclick="showPage('home')">Home</a></li>
+                        <li><a href="#" onclick="showPage('products')">Products</a></li>
+                        <li><a href="#" onclick="showPage('contact')">Contact</a></li>
+                        <li><a href="#" onclick="showCart()">Cart</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Categories</h4>
+                    <ul id="footer-categories">
+                        <!-- Categories will be populated by JavaScript -->
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Customer Service</h4>
+                    <ul>
+                        <li><a href="#" onclick="showPage('dashboard')">My Account</a></li>
+                        <li><a href="#" onclick="showPage('contact')">Help & Support</a></li>
+                        <li><a href="#" onclick="showPage('contact')">Track Order</a></li>
+                        <li><a href="#" onclick="showPage('contact')">Returns</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Bhilai Store. All rights reserved. Made with ❤️ for Bhilai community.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Load scripts in correct order -->
+    <script src="products-data.js"></script>
+    <script src="shopping-store.js"></script>
+    <script src="ecommerce.js"></script>
+</body>
+</html>
