@@ -15,7 +15,7 @@ let cartItems = [];
 let wishlistItems = [];
 
 // DOM Content Loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   initializeApp();
 });
 
@@ -104,7 +104,7 @@ function updateWishlistCount() {
 function setupEventListeners() {
   // Navigation
   document.getElementById('search-btn').addEventListener('click', performSearch);
-  document.getElementById('search-input').addEventListener('keypress', function(e) {
+  document.getElementById('search-input').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') performSearch();
   });
   document.getElementById('search-input').addEventListener('input', handleSearchInput);
@@ -116,7 +116,7 @@ function setupEventListeners() {
   document.getElementById('clear-filters').addEventListener('click', clearFilters);
 
   // Sort
-  document.getElementById('sort-select').addEventListener('change', function(e) {
+  document.getElementById('sort-select').addEventListener('change', function (e) {
     currentSort = e.target.value;
     renderProductsPage();
   });
@@ -162,7 +162,7 @@ function showPage(pageName, productId = null) {
   currentProductId = productId;
 
   // Render page content
-  switch(pageName) {
+  switch (pageName) {
     case 'home':
       renderHomePage();
       break;
@@ -318,7 +318,7 @@ function createProductCard(product) {
       </div>
       <div class="product-price">
         ${product.originalPrice && product.originalPrice > product.price ?
-          `<span class="original-price">₹${product.originalPrice}</span>` : ''}
+      `<span class="original-price">₹${product.originalPrice}</span>` : ''}
         <span class="current-price">₹${product.price}</span>
         <span class="unit">${product.unit}</span>
       </div>
@@ -353,8 +353,8 @@ function renderProductDetailPage(productId) {
         </div>
         <div class="thumbnail-images">
           ${product.images.map((image, index) =>
-            `<img src="${image}" alt="${product.name}" onclick="changeMainImage('${image}')" class="${index === 0 ? 'active' : ''}">`
-          ).join('')}
+    `<img src="${image}" alt="${product.name}" onclick="changeMainImage('${image}')" class="${index === 0 ? 'active' : ''}">`
+  ).join('')}
         </div>
       </div>
 
@@ -367,7 +367,7 @@ function renderProductDetailPage(productId) {
 
         <div class="product-price">
           ${product.originalPrice && product.originalPrice > product.price ?
-            `<span class="original-price">₹${product.originalPrice}</span>` : ''}
+      `<span class="original-price">₹${product.originalPrice}</span>` : ''}
           <span class="current-price">₹${product.price}</span>
           <span class="unit">${product.unit}</span>
           ${product.discount > 0 ? `<span class="discount">${product.discount}% OFF</span>` : ''}
@@ -387,8 +387,8 @@ function renderProductDetailPage(productId) {
             <h3>Specifications</h3>
             <ul>
               ${Object.entries(product.specifications).map(([key, value]) =>
-                `<li><strong>${key}:</strong> ${value}</li>`
-              ).join('')}
+        `<li><strong>${key}:</strong> ${value}</li>`
+      ).join('')}
             </ul>
           </div>
         ` : ''}
@@ -905,7 +905,7 @@ function renderCheckoutPage() {
       }
     }
 
-    document.getElementById('shipping-form').addEventListener('submit', function(e) {
+    document.getElementById('shipping-form').addEventListener('submit', function (e) {
       e.preventDefault();
       if (validateShippingForm()) {
         saveShippingData();
@@ -939,7 +939,8 @@ function renderCheckoutPage() {
             <div class="form-row">
               <div class="form-group">
                 <label for="card-number">Card Number *</label>
-                <input type="text" id="card-number" placeholder="1234 5678 9012 3456" required>
+                <input type="text" id="card-number" placeholder="4242 4242 4242 4242" required>
+                <small class="form-hint">Use 4242 4242 4242 4242 for successful test</small>
               </div>
             </div>
             <div class="form-row">
@@ -971,15 +972,24 @@ function renderCheckoutPage() {
 
           <div class="checkout-actions">
             <button type="button" class="btn btn-secondary" onclick="prevCheckoutStep()">Back</button>
-            <button type="submit" class="btn btn-primary">Place Order</button>
+            <button type="submit" class="btn btn-primary">Pay ₹${total + 50}</button>
           </div>
         </form>
+      </div>
+      
+      <!-- Payment Processing Modal -->
+      <div id="payment-processing-modal" class="payment-modal">
+        <div class="payment-modal-content">
+          <div class="payment-loader"></div>
+          <h3>Processing Payment</h3>
+          <p>Please wait while we verify your details...</p>
+        </div>
       </div>
     `;
 
     // Payment method switching
     document.querySelectorAll('.payment-method').forEach(method => {
-      method.addEventListener('click', function() {
+      method.addEventListener('click', function () {
         document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
         this.classList.add('active');
 
@@ -990,11 +1000,41 @@ function renderCheckoutPage() {
       });
     });
 
-    document.getElementById('payment-form').addEventListener('submit', function(e) {
+    document.getElementById('payment-form').addEventListener('submit', async function (e) {
       e.preventDefault();
       if (validatePaymentForm()) {
         savePaymentData();
-        nextCheckoutStep();
+
+        // Process Payment
+        const amount = total + 50;
+        const method = checkoutData.payment.method;
+
+        // Get full details for processing (not just the truncated ones saved in checkoutData)
+        let fullDetails = { ...checkoutData.payment.details };
+        if (method === 'card') {
+          fullDetails.cardNumber = document.getElementById('card-number').value;
+        }
+
+        showPaymentProcessing();
+
+        try {
+          const result = await PaymentGateway.processPayment(amount, method, fullDetails);
+
+          if (result.success) {
+            showNotification('Payment Successful!', 'success');
+            setTimeout(() => {
+              hidePaymentProcessing();
+              nextCheckoutStep();
+            }, 1000);
+          } else {
+            hidePaymentProcessing();
+            showNotification(result.message || 'Payment failed. Please try again.', 'error');
+          }
+        } catch (error) {
+          hidePaymentProcessing();
+          showNotification('An error occurred during payment processing.', 'error');
+          console.error(error);
+        }
       }
     });
   }
@@ -1234,19 +1274,19 @@ function closeMobileMenu() {
 function handleOutsideClick(e) {
   // Close cart sidebar
   if (!document.getElementById('cart-sidebar').contains(e.target) &&
-      !e.target.closest('.nav-cart')) {
+    !e.target.closest('.nav-cart')) {
     closeCart();
   }
 
   // Close wishlist sidebar
   if (!document.getElementById('wishlist-sidebar').contains(e.target) &&
-      !e.target.closest('.nav-wishlist')) {
+    !e.target.closest('.nav-wishlist')) {
     closeWishlist();
   }
 
   // Close search results
   if (!document.getElementById('search-input').contains(e.target) &&
-      !document.getElementById('search-results').contains(e.target)) {
+    !document.getElementById('search-results').contains(e.target)) {
     document.getElementById('search-results').style.display = 'none';
   }
 }
@@ -1277,7 +1317,7 @@ function renderDashboardPage() {
     <div id="orders-section" class="dashboard-section">
       <h2>Order History</h2>
       ${currentUser.orders && currentUser.orders.length > 0 ?
-        currentUser.orders.map(order => `
+      currentUser.orders.map(order => `
           <div class="order-card">
             <div class="order-header">
               <span class="order-id">${order.id}</span>
@@ -1301,8 +1341,8 @@ function renderDashboardPage() {
             </div>
           </div>
         `).join('') :
-        '<p>No orders yet.</p>'
-      }
+      '<p>No orders yet.</p>'
+    }
     </div>
 
     <div id="wishlist-section" class="dashboard-section">
@@ -1403,7 +1443,7 @@ function renderContactPage() {
     </div>
   `;
 
-  document.getElementById('contact-form').addEventListener('submit', function(e) {
+  document.getElementById('contact-form').addEventListener('submit', function (e) {
     e.preventDefault();
     showNotification('Thank you for your message! We\'ll get back to you soon.', 'success');
     this.reset();
@@ -1431,7 +1471,7 @@ function showAuthModal(type = 'login') {
       </form>
     `;
 
-    document.getElementById('login-form').addEventListener('submit', function(e) {
+    document.getElementById('login-form').addEventListener('submit', function (e) {
       e.preventDefault();
       handleLogin();
     });
@@ -1466,7 +1506,7 @@ function showAuthModal(type = 'login') {
       </form>
     `;
 
-    document.getElementById('register-form').addEventListener('submit', function(e) {
+    document.getElementById('register-form').addEventListener('submit', function (e) {
       e.preventDefault();
       handleRegister();
     });
@@ -1586,4 +1626,62 @@ function showDashboardSection(sectionName) {
     section.classList.remove('active');
   });
   document.getElementById(sectionName + '-section').classList.add('active');
+}
+
+// Payment Gateway Mock
+const PaymentGateway = {
+  processPayment: function (amount, method, details) {
+    return new Promise((resolve, reject) => {
+      console.log(`Processing ${method} payment of ₹${amount}`, details);
+
+      // Simulate network delay
+      setTimeout(() => {
+        // Cash on Delivery is always successful
+        if (method === 'cod') {
+          resolve({ success: true, transactionId: 'COD-' + Date.now() });
+          return;
+        }
+
+        // Mock Credit Card Validation
+        if (method === 'card') {
+          // Check for "Test" card number (simple validation)
+          // Removing spaces for check
+          const cardNum = details.cardNumber.replace(/\s/g, '');
+
+          // If ends with 4242 (as per our hint in UI for "successful test")
+          // Logic adjusted: we only saved last 4 digits in savePaymentData, but here we might need full access if we wanted deep validation.
+          // However, in the render function, we are passing `checkoutData.payment.details`. 
+          // `savePaymentData` slices the card number.
+          // Let's modify savePaymentData to save enough info or just trust the mock.
+          // Actually, let's just use random success chances or specific failure triggers
+          // For reliability in this demo: Always success unless specific trigger
+
+          if (details.cardNumber === '0000') { // Trigger failure
+            resolve({ success: false, message: 'Card declined by bank.' });
+          } else {
+            resolve({ success: true, transactionId: 'TXN-' + Date.now() });
+          }
+        }
+
+        // UPI Validation
+        else if (method === 'upi') {
+          resolve({ success: true, transactionId: 'UPI-' + Date.now() });
+        }
+
+        else {
+          reject(new Error('Unknown payment method'));
+        }
+      }, 2000); // 2 second delay
+    });
+  }
+};
+
+function showPaymentProcessing() {
+  const modal = document.getElementById('payment-processing-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function hidePaymentProcessing() {
+  const modal = document.getElementById('payment-processing-modal');
+  if (modal) modal.classList.remove('active');
 }
